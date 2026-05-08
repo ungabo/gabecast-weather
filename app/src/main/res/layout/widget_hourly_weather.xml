@@ -5,16 +5,17 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/widget_location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
+        android:includeFontPadding="false"
         android:maxLines="1"
         android:text="Next 8 hours"
-        android:textColor="#0E1B1D"
+        android:textColor="#F8FFFF"
         android:textSize="12sp"
         android:textStyle="bold" />
 
@@ -22,16 +23,18 @@
         android:id="@+id/widget_hourly_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="4dp"
         android:layout_weight="1"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="2dp"
+        android:divider="#226D7A"
+        android:dividerHeight="1dp"
         android:scrollbars="none" />
 
     <TextView
         android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:includeFontPadding="false"
         android:text="Open app to load weather"
-        android:textColor="#38565A"
-        android:textSize="12sp" />
+        android:textColor="#BCE9EC"
+        android:textSize="11sp" />
 </LinearLayout>

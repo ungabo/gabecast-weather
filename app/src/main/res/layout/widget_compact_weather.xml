@@ -5,43 +5,39 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/widget_icon"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:contentDescription="Weather"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_weather_partly_cloudy" />
 
     <TextView
-        android:id="@+id/widget_location"
-        android:layout_width="match_parent"
+        android:id="@+id/widget_temp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="GabeCast"
-        android:textColor="#0E1B1D"
-        android:textSize="12sp"
+        android:layout_marginStart="7dp"
+        android:includeFontPadding="false"
+        android:text="--"
+        android:textColor="#F8FFFF"
+        android:textSize="26sp"
         android:textStyle="bold" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/widget_high_low"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/widget_temp"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="--"
-            android:textColor="#0E1B1D"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/widget_high_low"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="H -- L --"
-            android:textColor="#38565A"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="H --  L --"
+        android:textColor="#BCE9EC"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 </LinearLayout>

@@ -281,14 +281,7 @@ private fun ContactSetupScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
-            Image(
-                painter = painterResource(R.drawable.gabecast_launcher_icon),
-                contentDescription = null,
-                modifier = Modifier.size(96.dp)
-            )
-            Spacer(Modifier.height(10.dp))
-            Text("GabeCast", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-            Text("Free. Ad-free.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            FeatureHeroImage()
         }
         item {
             Card {
@@ -334,14 +327,7 @@ private fun FirstLaunchScreen(
     ) {
         item {
             Spacer(Modifier.height(24.dp))
-            Image(
-                painter = painterResource(R.drawable.gabecast_launcher_icon),
-                contentDescription = null,
-                modifier = Modifier.size(96.dp)
-            )
-            Spacer(Modifier.height(10.dp))
-            Text("GabeCast", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-            Text("Free. Ad-free.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            FeatureHeroImage()
             Spacer(Modifier.height(12.dp))
             Text("U.S. weather data provided by the National Weather Service.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -365,6 +351,20 @@ private fun FirstLaunchScreen(
                 onAddResult(result)
             }
         }
+    }
+}
+
+@Composable
+private fun FeatureHeroImage() {
+    Card {
+        Image(
+            painter = painterResource(R.drawable.gabecast_feature_graphic),
+            contentDescription = "GabeCast, Free. Ad-free.",
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1024f / 500f),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
@@ -831,6 +831,10 @@ private fun AboutScreen() {
         item {
             Text("About GabeCast", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
+        item { ArtworkPreviewCard("Forecast artwork", R.drawable.gabecast_condition_icons_sheet, 16f / 10f) }
+        item { ArtworkPreviewCard("Widget set", R.drawable.gabecast_widget_previews, 16f / 10f) }
+        item { ArtworkPreviewCard("Radar fallback", R.drawable.gabecast_radar_placeholder, 1f) }
+        item { ArtworkPreviewCard("Alert treatment", R.drawable.gabecast_alert_visual, 16f / 9f) }
         item {
             Card {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -844,6 +848,23 @@ private fun AboutScreen() {
                     Text("Weather-service contact email is saved locally and required before weather API requests.")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ArtworkPreviewCard(title: String, imageRes: Int, ratio: Float) {
+    Card {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, fontWeight = FontWeight.Bold)
+            Image(
+                painter = painterResource(imageRes),
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(ratio),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 }

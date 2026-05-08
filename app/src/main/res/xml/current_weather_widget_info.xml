@@ -3,8 +3,12 @@
     android:description="@string/widget_name"
     android:initialLayout="@layout/widget_weather"
     android:minWidth="180dp"
-    android:minHeight="80dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="40dp"
     android:previewLayout="@layout/widget_weather"
     android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
     android:updatePeriodMillis="10800000"
     android:widgetCategory="home_screen" />

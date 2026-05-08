@@ -66,6 +66,20 @@ internal object WeatherWidgetSupport {
             ?: "Open app to load weather"
     }
 
+    fun conditionIconRes(forecast: String?): Int {
+        val text = forecast.orEmpty().lowercase()
+        return when {
+            "thunder" in text || "storm" in text || "lightning" in text -> R.drawable.ic_weather_storm
+            "snow" in text || "sleet" in text || "ice" in text || "freezing" in text -> R.drawable.ic_weather_snow
+            "rain" in text || "shower" in text || "drizzle" in text -> R.drawable.ic_weather_rain
+            "fog" in text || "mist" in text || "haze" in text || "smoke" in text -> R.drawable.ic_weather_fog
+            "wind" in text || "breezy" in text || "gust" in text -> R.drawable.ic_weather_wind
+            "partly" in text || "mostly sunny" in text || "mostly clear" in text -> R.drawable.ic_weather_partly_cloudy
+            "cloud" in text || "overcast" in text -> R.drawable.ic_weather_cloudy
+            else -> R.drawable.ic_weather_sunny
+        }
+    }
+
     fun updateCurrentWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
         val dashboard = loadDashboard()
         val views = RemoteViews(context.packageName, R.layout.widget_weather)
@@ -73,6 +87,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_condition, conditionText(dashboard))
+        views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
 
@@ -83,6 +98,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
+        views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
 
@@ -95,6 +111,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
         views.setTextViewText(R.id.widget_condition, conditionText(dashboard))
         views.setTextViewText(R.id.widget_precip_wind, "${precipText(dashboard)}  ${windText(dashboard)}")
+        views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
 

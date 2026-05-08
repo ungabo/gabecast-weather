@@ -52,6 +52,18 @@ From the project root:
 
 The release APK can be aligned and signed with a local Android keystore for device testing. Do not commit keystores, passwords, APKs, or local SDK/toolchain folders.
 
+## Web Visual Version
+
+A small static web version/design check lives in `web/`. It uses the same GabeCast artwork as the Android app and can be opened directly in a browser:
+
+```text
+web/index.html
+```
+
+This is useful for fast desktop/mobile screenshot checks of the dashboard, radar, widgets, and artwork composition.
+
+Current screenshot outputs are kept in `web/screenshots/`.
+
 ## Repository Notes
 
 Generated APKs, local toolchains, Gradle caches, `local.properties`, and keystore files are intentionally ignored by git.

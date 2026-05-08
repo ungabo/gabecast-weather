@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GabeCast Web</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <aside class="rail" aria-label="GabeCast navigation">
+      <img class="app-icon" src="../app/src/main/res/drawable-nodpi/gabecast_launcher_icon.png" alt="">
+      <div>
+        <h1>GabeCast</h1>
+        <p>Free. Ad-free.</p>
+      </div>
+      <nav>
+        <button class="active" data-view="dashboard">Weather</button>
+        <button data-view="radar">Radar</button>
+        <button data-view="widgets">Widgets</button>
+        <button data-view="about">About</button>
+      </nav>
+    </aside>
+
+    <section class="view active" id="dashboard" aria-label="Weather dashboard">
+      <header class="topline">
+        <div>
+          <p class="eyebrow">Ann Arbor, MI</p>
+          <h2>Current Conditions</h2>
+        </div>
+        <button class="refresh">Refresh</button>
+      </header>
+
+      <section class="weather-grid">
+        <article class="current-card">
+          <div>
+            <p class="eyebrow">Partly Cloudy</p>
+            <div class="temp-row">
+              <img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt="">
+              <strong>72°</strong>
+            </div>
+            <p class="muted">H 75°  L 55°</p>
+          </div>
+          <dl>
+            <div><dt>Rain</dt><dd>20%</dd></div>
+            <div><dt>Wind</dt><dd>8 mph NW</dd></div>
+            <div><dt>Humidity</dt><dd>46%</dd></div>
+          </dl>
+        </article>
+
+        <article class="alert-card">
+          <img src="../app/src/main/res/drawable-nodpi/gabecast_alert_visual.png" alt="">
+        </article>
+
+        <article class="hourly-card">
+          <h3>Next 8 Hours</h3>
+          <div class="hourly-strip" tabindex="0">
+            <div><span>1 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt=""><strong>72°</strong><small>20%</small></div>
+            <div><span>2 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_sunny.png" alt=""><strong>73°</strong><small>20%</small></div>
+            <div><span>3 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_cloudy.png" alt=""><strong>74°</strong><small>20%</small></div>
+            <div><span>4 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_rain.png" alt=""><strong>74°</strong><small>30%</small></div>
+            <div><span>5 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_storm.png" alt=""><strong>73°</strong><small>40%</small></div>
+            <div><span>6 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_rain.png" alt=""><strong>71°</strong><small>40%</small></div>
+            <div><span>7 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_cloudy.png" alt=""><strong>69°</strong><small>20%</small></div>
+            <div><span>8 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_fog.png" alt=""><strong>67°</strong><small>10%</small></div>
+          </div>
+        </article>
+
+        <article class="daily-card">
+          <h3>7-Day Forecast</h3>
+          <ul>
+            <li><img src="../app/src/main/res/drawable-nodpi/ic_weather_sunny.png" alt=""><span>Today</span><b>75°</b><small>Sunny</small></li>
+            <li><img src="../app/src/main/res/drawable-nodpi/ic_weather_rain.png" alt=""><span>Tonight</span><b>55°</b><small>Chance rain</small></li>
+            <li><img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt=""><span>Friday</span><b>74°</b><small>Partly cloudy</small></li>
+            <li><img src="../app/src/main/res/drawable-nodpi/ic_weather_wind.png" alt=""><span>Saturday</span><b>71°</b><small>Breezy</small></li>
+          </ul>
+        </article>
+      </section>
+    </section>
+
+    <section class="view" id="radar" aria-label="Radar">
+      <header class="topline">
+        <div>
+          <p class="eyebrow">Approx. 75-mile radius</p>
+          <h2>Radar Near Ann Arbor</h2>
+        </div>
+        <button class="refresh">Refresh</button>
+      </header>
+      <article class="radar-panel">
+        <img src="../app/src/main/res/drawable-nodpi/gabecast_radar_placeholder.png" alt="Radar near selected location">
+        <p>Radar imagery may be delayed. Updated in app: 3:43 PM.</p>
+      </article>
+    </section>
+
+    <section class="view" id="widgets" aria-label="Widgets">
+      <header class="topline">
+        <div>
+          <p class="eyebrow">Compact home screen views</p>
+          <h2>Widget Set</h2>
+        </div>
+      </header>
+      <section class="live-widget-grid" aria-label="Compact widget sizing preview">
+        <article class="live-widget current-widget">
+          <img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt="">
+          <strong>72°</strong>
+          <div>
+            <b>Ann Arbor</b>
+            <span>Partly Cloudy</span>
+          </div>
+        </article>
+        <article class="live-widget compact-widget">
+          <img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt="">
+          <strong>72°</strong>
+          <span>H 75°  L 55°</span>
+        </article>
+        <article class="live-widget detailed-widget">
+          <div class="widget-temp"><img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt=""><strong>72°</strong></div>
+          <div>
+            <b>Ann Arbor</b>
+            <span>H 75°  L 55°</span>
+            <span>Partly Cloudy</span>
+            <em>Rain 20%  Wind 8 mph</em>
+          </div>
+        </article>
+        <article class="live-widget radar-widget">
+          <img src="../app/src/main/res/drawable-nodpi/gabecast_radar_placeholder.png" alt="">
+          <b>Radar: Ann Arbor</b>
+        </article>
+        <article class="live-widget hourly-widget">
+          <b>Next 8 hours</b>
+          <div><span>1 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_partly_cloudy.png" alt=""><strong>72°</strong><small>Rain 20%</small></div>
+          <div><span>2 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_sunny.png" alt=""><strong>73°</strong><small>Rain 20%</small></div>
+          <div><span>3 PM</span><img src="../app/src/main/res/drawable-nodpi/ic_weather_cloudy.png" alt=""><strong>74°</strong><small>Rain 20%</small></div>
+        </article>
+      </section>
+      <article class="widget-board">
+        <img src="../app/src/main/res/drawable-nodpi/gabecast_widget_previews.png" alt="GabeCast widget designs">
+      </article>
+    </section>
+
+    <section class="view" id="about" aria-label="About">
+      <article class="about-card">
+        <img src="../app/src/main/res/drawable-nodpi/gabecast_feature_graphic.png" alt="GabeCast">
+        <p>Weather data comes from NOAA/National Weather Service. A contact email is saved only on this device and sent in the request User-Agent header before weather or radar API calls run.</p>
+        <img src="../app/src/main/res/drawable-nodpi/gabecast_condition_icons_sheet.png" alt="GabeCast condition artwork">
+      </article>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,27 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="28dp"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingVertical="3dp">
+    android:orientation="horizontal">
 
     <TextView
         android:id="@+id/widget_hour_time"
-        android:layout_width="54dp"
+        android:layout_width="42dp"
         android:layout_height="wrap_content"
+        android:includeFontPadding="false"
         android:text="2 PM"
-        android:textColor="#0E1B1D"
-        android:textSize="12sp"
+        android:textColor="#F8FFFF"
+        android:textSize="11sp"
         android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/widget_hour_icon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:contentDescription="Forecast"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_weather_partly_cloudy" />
 
     <TextView
         android:id="@+id/widget_hour_temp"
-        android:layout_width="46dp"
+        android:layout_width="42dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:includeFontPadding="false"
         android:text="--"
-        android:textColor="#0E1B1D"
-        android:textSize="15sp"
+        android:textColor="#F8FFFF"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <TextView
@@ -30,8 +40,9 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ellipsize="end"
+        android:includeFontPadding="false"
         android:maxLines="1"
         android:text="Rain --"
-        android:textColor="#38565A"
-        android:textSize="12sp" />
+        android:textColor="#BCE9EC"
+        android:textSize="11sp" />
 </LinearLayout>
