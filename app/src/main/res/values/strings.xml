@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GabeCast</string>
+    <string name="widget_name">GabeCast Current Weather</string>
+    <string name="widget_compact_name">GabeCast Compact</string>
+    <string name="widget_detailed_name">GabeCast Details</string>
+    <string name="widget_hourly_name">GabeCast Hourly</string>
+    <string name="widget_radar_name">GabeCast Radar</string>
+</resources>

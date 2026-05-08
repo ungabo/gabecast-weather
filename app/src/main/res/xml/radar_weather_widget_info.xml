@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_radar_name"
+    android:initialLayout="@layout/widget_radar_weather"
+    android:minWidth="180dp"
+    android:minHeight="180dp"
+    android:previewLayout="@layout/widget_radar_weather"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="10800000"
+    android:widgetCategory="home_screen" />

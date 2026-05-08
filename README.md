@@ -1,0 +1,57 @@
+# GabeCast
+
+Free. Ad-free.
+
+GabeCast is a compact Android weather app for U.S. locations. It uses official NOAA/National Weather Service data directly from the device, with local caching for forecasts, current conditions, alerts, radar, and widgets.
+
+## Contact Email Requirement
+
+NOAA/NWS asks client applications to identify a contact in API requests. GabeCast does not ship with a default, dummy, or developer email address.
+
+On first launch, the user must enter their own contact email before the app can make weather or radar API calls. The email is:
+
+- saved only on the device;
+- used only in the HTTP `User-Agent` header for NOAA/NWS requests;
+- required before location search, current-location setup, forecast refresh, radar refresh, or background widget refresh can request data.
+
+If the email is blank or invalid, GabeCast keeps API calls disabled and shows the setup screen.
+
+## Features
+
+- Current conditions
+- Daily forecast
+- Hourly forecast
+- Active weather alerts
+- Static radar image near the selected location
+- Saved locations
+- Multiple compact Android widgets
+- Fahrenheit/Celsius and mph/km/h settings
+- Light, dark, and system theme modes
+- Local cache and stale-data fallback
+- U.S.-only coverage notice
+
+## Data Sources
+
+Weather and alert data are provided by the National Weather Service API at `https://api.weather.gov`.
+
+Radar imagery is provided by NOAA/National Weather Service public radar image services.
+
+GabeCast is not endorsed by NOAA or the National Weather Service. Weather data and radar imagery may be delayed or unavailable, and users should follow official emergency instructions during hazardous weather.
+
+## Building
+
+This project is a Kotlin Android app using Jetpack Compose, Room, DataStore, OkHttp, Retrofit, WorkManager, and Play Services Location.
+
+From the project root:
+
+```powershell
+.\gradlew.bat assembleDebug
+.\gradlew.bat assembleRelease
+.\gradlew.bat testDebugUnitTest
+```
+
+The release APK can be aligned and signed with a local Android keystore for device testing. Do not commit keystores, passwords, APKs, or local SDK/toolchain folders.
+
+## Repository Notes
+
+Generated APKs, local toolchains, Gradle caches, `local.properties`, and keystore files are intentionally ignored by git.
