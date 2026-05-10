@@ -2,10 +2,10 @@
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import com.gabecast.weather.MainActivity
@@ -28,9 +28,15 @@ internal object WeatherWidgetSupport {
         )
     }
 
-    fun loadDashboard(): WeatherDashboard? = runBlocking(Dispatchers.IO) {
+    private fun loadDashboard(allowRefresh: Boolean): WeatherDashboard? = runBlocking(Dispatchers.IO) {
         val selectedId = ServiceLocator.settingsRepository.settingsSnapshotSelectedId()
-        selectedId?.let { ServiceLocator.weatherRepository.loadCachedDashboard(it) }
+        selectedId?.let {
+            if (allowRefresh) {
+                ServiceLocator.weatherRepository.loadDashboardForDisplay(it, forceRefresh = false)
+            } else {
+                ServiceLocator.weatherRepository.loadCachedDashboard(it)
+            }
+        }
     }
 
     fun tempText(valueF: Double?): String = valueF?.let { "${it.toInt()}\u00B0F" } ?: "--"
@@ -80,19 +86,41 @@ internal object WeatherWidgetSupport {
         }
     }
 
-    fun updateCurrentWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val dashboard = loadDashboard()
-        val views = RemoteViews(context.packageName, R.layout.widget_weather)
+    private fun currentLayoutId(options: Bundle): Int {
+        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH)
+            .coerceAtLeast(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH))
+        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+            .coerceAtLeast(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
+        return if (height >= width) R.layout.widget_weather_vertical else R.layout.widget_weather
+    }
+
+    fun updateCurrentWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        allowRefresh: Boolean = false
+    ) {
+        val dashboard = loadDashboard(allowRefresh)
+        val layoutId = currentLayoutId(manager.getAppWidgetOptions(appWidgetId))
+        val views = RemoteViews(context.packageName, layoutId)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_condition, conditionText(dashboard))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
+        if (layoutId == R.layout.widget_weather_vertical) {
+            views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
+        }
         manager.updateAppWidget(appWidgetId, views)
     }
 
-    fun updateCompactWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val dashboard = loadDashboard()
+    fun updateCompactWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        allowRefresh: Boolean = false
+    ) {
+        val dashboard = loadDashboard(allowRefresh)
         val views = RemoteViews(context.packageName, R.layout.widget_compact_weather)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
@@ -102,8 +130,13 @@ internal object WeatherWidgetSupport {
         manager.updateAppWidget(appWidgetId, views)
     }
 
-    fun updateDetailedWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val dashboard = loadDashboard()
+    fun updateDetailedWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        allowRefresh: Boolean = false
+    ) {
+        val dashboard = loadDashboard(allowRefresh)
         val views = RemoteViews(context.packageName, R.layout.widget_detailed_weather)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
@@ -115,8 +148,13 @@ internal object WeatherWidgetSupport {
         manager.updateAppWidget(appWidgetId, views)
     }
 
-    fun updateHourlyWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val dashboard = loadDashboard()
+    fun updateHourlyWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        allowRefresh: Boolean = false
+    ) {
+        val dashboard = loadDashboard(allowRefresh)
         val views = RemoteViews(context.packageName, R.layout.widget_hourly_weather)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "Next 8 hours")
@@ -131,8 +169,13 @@ internal object WeatherWidgetSupport {
         manager.updateAppWidget(appWidgetId, views)
     }
 
-    fun updateRadarWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-        val dashboard = loadDashboard()
+    fun updateRadarWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        allowRefresh: Boolean = false
+    ) {
+        val dashboard = loadDashboard(allowRefresh)
         val views = RemoteViews(context.packageName, R.layout.widget_radar_weather)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         val radar = runBlocking(Dispatchers.IO) {
@@ -149,13 +192,7 @@ internal object WeatherWidgetSupport {
         manager.updateAppWidget(appWidgetId, views)
     }
 
-    fun updateProvider(context: Context, provider: Class<*>, updater: (Context, AppWidgetManager, Int) -> Unit) {
-        val manager = AppWidgetManager.getInstance(context)
-        val ids = manager.getAppWidgetIds(ComponentName(context, provider))
-        ids.forEach { updater(context, manager, it) }
-    }
-
     fun allHourly(): List<HourlyForecastPeriod> {
-        return loadDashboard()?.hourlyForecast.orEmpty().take(8)
+        return loadDashboard(allowRefresh = false)?.hourlyForecast.orEmpty().take(8)
     }
 }

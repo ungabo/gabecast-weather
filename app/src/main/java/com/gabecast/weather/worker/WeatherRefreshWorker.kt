@@ -17,7 +17,7 @@ class WeatherRefreshWorker(
         if (!settings.nwsContactEmailConfirmed) return Result.success()
         val selectedId = settings.selectedLocationId ?: return Result.success()
         return runCatching {
-            ServiceLocator.weatherRepository.refreshDashboard(selectedId, forceRefresh = false)
+            ServiceLocator.weatherRepository.loadDashboardForDisplay(selectedId, forceRefresh = false)
             WeatherWidgets.updateAll(applicationContext)
             Result.success()
         }.getOrElse {

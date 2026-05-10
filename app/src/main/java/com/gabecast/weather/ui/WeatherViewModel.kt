@@ -3,6 +3,7 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.gabecast.weather.ServiceLocator
 import com.gabecast.weather.data.repository.UnsupportedLocationException
 import com.gabecast.weather.data.repository.WeatherRepository
 import com.gabecast.weather.domain.model.LocationSearchResult
@@ -17,6 +18,7 @@ import com.gabecast.weather.radar.RadarImageResult
 import com.gabecast.weather.radar.RadarRepository
 import com.gabecast.weather.settings.isUsableContactEmail
 import com.gabecast.weather.settings.UserSettingsRepository
+import com.gabecast.weather.widget.WeatherWidgets
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -295,7 +297,7 @@ class WeatherViewModel(
                         _uiState.update { it.copy(dashboard = cached, isLoading = false) }
                     }
                 }
-            runCatching { weatherRepository.refreshDashboard(locationId, forceRefresh) }
+            runCatching { weatherRepository.loadDashboardForDisplay(locationId, forceRefresh) }
                 .onSuccess { dashboard ->
                     _uiState.update {
                         it.copy(
@@ -305,6 +307,7 @@ class WeatherViewModel(
                             errorMessage = dashboard.refreshMessage
                         )
                     }
+                    WeatherWidgets.updateAll(ServiceLocator.applicationContext())
                 }
                 .onFailure { throwable ->
                     _uiState.update { it.copy(isLoading = false, isRefreshing = false, errorMessage = throwable.userMessage()) }

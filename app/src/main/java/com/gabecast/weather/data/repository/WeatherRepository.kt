@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.Response
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 import java.util.Locale
 import java.util.UUID
@@ -92,6 +93,15 @@ class WeatherRepository(
         )
     }
 
+    suspend fun loadDashboardForDisplay(locationId: String, forceRefresh: Boolean = false): WeatherDashboard {
+        val cached = loadCachedDashboard(locationId)
+        return if (forceRefresh || shouldRefreshForDisplay(cached, Instant.now())) {
+            refreshDashboard(locationId, forceRefresh = forceRefresh)
+        } else {
+            cached
+        }
+    }
+
     suspend fun refreshDashboard(locationId: String, forceRefresh: Boolean = false): WeatherDashboard {
         return refreshMutex.withLock {
             val location = dao.getLocation(locationId)?.toDomain() ?: throw IOException("Location missing")
@@ -105,7 +115,11 @@ class WeatherRepository(
             val cached = loadCachedDashboard(metadataLocation.id)
             val dailyExpired = cached.dailyForecast.firstOrNull()?.expiresAt?.isBefore(now) ?: true
             val hourlyExpired = cached.hourlyForecast.firstOrNull()?.expiresAt?.isBefore(now) ?: true
-            val currentExpired = cached.currentConditions?.expiresAt?.isBefore(now) ?: true
+            val currentExpired = cached.currentConditions
+                ?.fetchedAt
+                ?.plus(CURRENT_CONDITIONS_MAX_AGE)
+                ?.isBefore(now)
+                ?: true
             val alertsExpired = cached.alerts.maxOfOrNull { it.fetchedAt }?.plusSeconds(300)?.isBefore(now) ?: true
 
             runCatching {
@@ -221,6 +235,16 @@ class WeatherRepository(
         return UUID.nameUUIDFromBytes(key.toByteArray()).toString()
     }
 
+    private fun shouldRefreshForDisplay(dashboard: WeatherDashboard, now: Instant): Boolean {
+        if (dashboard.location == null) return true
+        if (dashboard.currentConditions == null) return true
+        if (dashboard.dailyForecast.isEmpty() || dashboard.hourlyForecast.isEmpty()) return true
+        if (dashboard.currentConditions.fetchedAt.plus(CURRENT_CONDITIONS_MAX_AGE).isBefore(now)) return true
+        if (dashboard.dailyForecast.firstOrNull()?.expiresAt?.isBefore(now) == true) return true
+        if (dashboard.hourlyForecast.firstOrNull()?.expiresAt?.isBefore(now) == true) return true
+        return false
+    }
+
     private fun Double.coordinate(): String = "%.4f".format(Locale.US, this)
 
     private fun Throwable.userFriendlyMessage(): String = when (this) {
@@ -234,6 +258,10 @@ class WeatherRepository(
             throw IOException("NWS request failed with HTTP ${code()}: ${errorBody()?.string()?.take(160).orEmpty()}")
         }
         return body() ?: throw IOException("NWS response was empty")
+    }
+
+    companion object {
+        val CURRENT_CONDITIONS_MAX_AGE: Duration = Duration.ofMinutes(20)
     }
 }
 

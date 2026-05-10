@@ -49,6 +49,8 @@ object ServiceLocator {
         appContext = context.applicationContext
     }
 
+    fun applicationContext(): Context = appContext
+
     private val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(

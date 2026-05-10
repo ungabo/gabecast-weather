@@ -6,6 +6,7 @@ app/build/
 local.properties
 keystore/
 dist/
+artifacts/
 *.jks
 *.apk
 *.idsig

@@ -11,7 +11,7 @@ class GabeCastApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         ServiceLocator.initialize(this)
-        val request = PeriodicWorkRequestBuilder<WeatherRefreshWorker>(3, TimeUnit.HOURS).build()
+        val request = PeriodicWorkRequestBuilder<WeatherRefreshWorker>(30, TimeUnit.MINUTES).build()
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "weather-refresh",
             ExistingPeriodicWorkPolicy.UPDATE,
