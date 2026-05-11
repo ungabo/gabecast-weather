@@ -7,9 +7,11 @@
 
     <TextView
         android:id="@+id/widget_hour_time"
-        android:layout_width="42dp"
+        android:layout_width="54dp"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
         android:includeFontPadding="false"
+        android:maxLines="1"
         android:text="2 PM"
         android:textColor="#F8FFFF"
         android:textSize="11sp"
@@ -25,7 +27,7 @@
 
     <TextView
         android:id="@+id/widget_hour_temp"
-        android:layout_width="42dp"
+        android:layout_width="38dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="6dp"
         android:includeFontPadding="false"
@@ -34,15 +36,49 @@
         android:textSize="14sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_hour_detail"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:ellipsize="end"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:text="Rain --"
-        android:textColor="#BCE9EC"
-        android:textSize="11sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/widget_hour_precip_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="Precipitation"
+            android:src="@drawable/ic_metric_precip" />
+
+        <TextView
+            android:id="@+id/widget_hour_precip"
+            android:layout_width="38dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="--"
+            android:textColor="#BCE9EC"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/widget_hour_wind_icon"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:contentDescription="Wind"
+            android:src="@drawable/ic_metric_wind" />
+
+        <TextView
+            android:id="@+id/widget_hour_wind"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="--"
+            android:textColor="#BCE9EC"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 </LinearLayout>

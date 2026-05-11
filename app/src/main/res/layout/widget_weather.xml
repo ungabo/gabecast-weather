@@ -48,14 +48,26 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/widget_condition"
+            android:id="@+id/widget_high_low"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Open app"
+            android:text="H --  L --"
+            android:textColor="#F8FFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_updated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Updated --"
             android:textColor="#BCE9EC"
-            android:textSize="11sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 </LinearLayout>

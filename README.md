@@ -25,6 +25,7 @@ If the email is blank or invalid, GabeCast keeps API calls disabled and shows th
 - Static radar image near the selected location
 - Saved locations
 - Multiple compact Android widgets
+- First-seen active alert notifications, when notification permission is granted
 - Fahrenheit/Celsius and mph/km/h settings
 - Light, dark, and system theme modes
 - Local cache and stale-data fallback
@@ -34,7 +35,7 @@ If the email is blank or invalid, GabeCast keeps API calls disabled and shows th
 
 Weather and alert data are provided by the National Weather Service API at `https://api.weather.gov`.
 
-Radar imagery is provided by NOAA/National Weather Service public radar image services.
+Radar imagery is provided by NOAA/National Weather Service public radar image services. When available, GabeCast composites the transparent radar image over a static Esri World Topographic Map basemap for local context without using a full map SDK.
 
 GabeCast is not endorsed by NOAA or the National Weather Service. Weather data and radar imagery may be delayed or unavailable, and users should follow official emergency instructions during hazardous weather.
 

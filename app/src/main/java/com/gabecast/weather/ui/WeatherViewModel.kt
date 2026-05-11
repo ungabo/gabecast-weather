@@ -307,6 +307,7 @@ class WeatherViewModel(
                             errorMessage = dashboard.refreshMessage
                         )
                     }
+                    ServiceLocator.alertNotificationHelper.notifyNewAlerts(dashboard.alerts)
                     WeatherWidgets.updateAll(ServiceLocator.applicationContext())
                 }
                 .onFailure { throwable ->

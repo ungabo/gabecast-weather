@@ -13,7 +13,7 @@ import com.gabecast.weather.R
 import com.gabecast.weather.ServiceLocator
 import com.gabecast.weather.domain.model.HourlyForecastPeriod
 import com.gabecast.weather.domain.model.WeatherDashboard
-import com.gabecast.weather.util.formatShortTime
+import com.gabecast.weather.util.formatUpdatedAge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
@@ -53,17 +53,25 @@ internal object WeatherWidgetSupport {
             .take(8)
             .mapNotNull { it.probabilityOfPrecipitationPercent }
             .maxOrNull()
-        return precip?.let { "Rain $it%" } ?: "Rain --"
+        return precip?.let { "$it%" } ?: "--"
     }
 
     fun windText(dashboard: WeatherDashboard?): String {
         val current = dashboard?.currentConditions
         val speed = current?.windSpeedMph?.toInt()
-        return if (speed != null) {
-            "Wind $speed mph ${current.windDirection.orEmpty()}".trim()
-        } else {
-            "Wind --"
-        }
+        return speed?.toString() ?: "--"
+    }
+
+    fun updatedText(dashboard: WeatherDashboard?): String {
+        return (dashboard?.currentConditions?.fetchedAt ?: dashboard?.fetchedAt).formatUpdatedAge()
+    }
+
+    fun hourlyWindText(period: HourlyForecastPeriod): String {
+        return period.windSpeed?.let { WIND_NUMBER.find(it)?.value } ?: "--"
+    }
+
+    fun hourlyPrecipText(period: HourlyForecastPeriod): String {
+        return period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--"
     }
 
     fun conditionText(dashboard: WeatherDashboard?): String {
@@ -106,11 +114,9 @@ internal object WeatherWidgetSupport {
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
-        views.setTextViewText(R.id.widget_condition, conditionText(dashboard))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
-        if (layoutId == R.layout.widget_weather_vertical) {
-            views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
-        }
+        views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
+        views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
         manager.updateAppWidget(appWidgetId, views)
     }
 
@@ -126,6 +132,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
+        views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
@@ -142,8 +149,9 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "GabeCast")
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
-        views.setTextViewText(R.id.widget_condition, conditionText(dashboard))
-        views.setTextViewText(R.id.widget_precip_wind, "${precipText(dashboard)}  ${windText(dashboard)}")
+        views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
+        views.setTextViewText(R.id.widget_precip_value, precipText(dashboard))
+        views.setTextViewText(R.id.widget_wind_value, windText(dashboard))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
@@ -158,6 +166,7 @@ internal object WeatherWidgetSupport {
         val views = RemoteViews(context.packageName, R.layout.widget_hourly_weather)
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "Next 8 hours")
+        views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
         val intent = Intent(context, HourlyWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
@@ -195,4 +204,6 @@ internal object WeatherWidgetSupport {
     fun allHourly(): List<HourlyForecastPeriod> {
         return loadDashboard(allowRefresh = false)?.hourlyForecast.orEmpty().take(8)
     }
+
+    private val WIND_NUMBER = Regex("""\d+""")
 }

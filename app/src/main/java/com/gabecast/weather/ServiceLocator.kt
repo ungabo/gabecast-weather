@@ -8,6 +8,7 @@ import com.gabecast.weather.data.local.WeatherDatabase
 import com.gabecast.weather.data.remote.createNwsApi
 import com.gabecast.weather.data.repository.WeatherRepository
 import com.gabecast.weather.location.LocationRepository
+import com.gabecast.weather.notifications.AlertNotificationHelper
 import com.gabecast.weather.radar.RadarImageService
 import com.gabecast.weather.radar.RadarRepository
 import com.gabecast.weather.settings.UserSettingsRepository
@@ -45,8 +46,13 @@ object ServiceLocator {
         )
     }
 
+    val alertNotificationHelper: AlertNotificationHelper by lazy {
+        AlertNotificationHelper(appContext)
+    }
+
     fun initialize(context: Context) {
         appContext = context.applicationContext
+        alertNotificationHelper.ensureChannel()
     }
 
     fun applicationContext(): Context = appContext

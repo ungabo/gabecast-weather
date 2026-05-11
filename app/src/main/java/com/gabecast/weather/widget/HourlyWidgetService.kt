@@ -30,8 +30,8 @@ class HourlyWidgetService : RemoteViewsService() {
             val views = RemoteViews(packageName, R.layout.widget_hourly_item)
             views.setTextViewText(R.id.widget_hour_time, item.startTime.formatShortTime())
             views.setTextViewText(R.id.widget_hour_temp, item.temperatureF?.let { "$it\u00B0" } ?: "--")
-            val rain = item.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--"
-            views.setTextViewText(R.id.widget_hour_detail, "Rain $rain  ${item.shortForecast.orEmpty()}")
+            views.setTextViewText(R.id.widget_hour_precip, WeatherWidgetSupport.hourlyPrecipText(item))
+            views.setTextViewText(R.id.widget_hour_wind, WeatherWidgetSupport.hourlyWindText(item))
             views.setImageViewResource(R.id.widget_hour_icon, WeatherWidgetSupport.conditionIconRes(item.shortForecast))
             return views
         }

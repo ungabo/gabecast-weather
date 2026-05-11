@@ -1,7 +1,9 @@
 ﻿package com.gabecast.weather
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -82,6 +84,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -89,6 +92,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.content.ContextCompat
 import com.gabecast.weather.domain.model.DailyForecastPeriod
 import com.gabecast.weather.domain.model.HourlyForecastPeriod
 import com.gabecast.weather.domain.model.SavedLocation
@@ -106,6 +110,7 @@ import com.gabecast.weather.ui.RadarUiState
 import com.gabecast.weather.ui.WeatherUiState
 import com.gabecast.weather.ui.WeatherViewModel
 import com.gabecast.weather.settings.isUsableContactEmail
+import com.gabecast.weather.util.formatUpdatedAge
 import com.gabecast.weather.util.formatShortDateTime
 import com.gabecast.weather.util.formatShortTime
 import kotlin.math.roundToInt
@@ -170,6 +175,7 @@ private fun GabeCastTheme(themeMode: ThemeMode, content: @Composable () -> Unit)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GabeCastApp(uiState: WeatherUiState, vm: WeatherViewModel) {
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -177,12 +183,26 @@ private fun GabeCastApp(uiState: WeatherUiState, vm: WeatherViewModel) {
             if (grants.values.any { it }) vm.useCurrentLocation()
         }
     )
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = {}
+    )
 
     LaunchedEffect(uiState.errorMessage) {
         val message = uiState.errorMessage
         if (!message.isNullOrBlank()) {
             snackbarHostState.showSnackbar(message)
             vm.dismissMessage()
+        }
+    }
+
+    LaunchedEffect(uiState.hasContactEmail) {
+        if (
+            uiState.hasContactEmail &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -402,7 +422,6 @@ private fun CurrentConditionsCard(dashboard: WeatherDashboard, settings: UserSet
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(location?.displayName ?: "Weather", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(today?.shortForecast ?: current?.conditionText ?: "Forecast loading", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(onClick = { onRefresh(true) }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh forecast")
@@ -414,14 +433,17 @@ private fun CurrentConditionsCard(dashboard: WeatherDashboard, settings: UserSet
                     contentDescription = current?.conditionText ?: today?.shortForecast ?: "Weather condition",
                     modifier = Modifier.size(76.dp)
                 )
-                Text(formatTemperature(current?.temperatureF, settings), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                Column {
+                    Text(formatTemperature(current?.temperatureF, settings), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
+                    Text(highLowText(dashboard, settings), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(current?.conditionText ?: "Current observation unavailable")
-                    Text("Wind ${formatWind(current?.windSpeedMph, current?.windDirection, settings)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    MetricRow(R.drawable.ic_metric_precip, precipText(dashboard))
+                    MetricRow(R.drawable.ic_metric_wind, formatWind(current?.windSpeedMph, current?.windDirection, settings))
                     Text("Humidity ${current?.humidityPercent?.roundToInt()?.let { "$it%" } ?: "--"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Text("Last updated: ${dashboard.fetchedAt?.formatShortDateTime() ?: "--"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(dashboard.currentConditions?.fetchedAt.formatUpdatedAge(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -473,8 +495,8 @@ private fun HourlyStrip(periods: List<HourlyForecastPeriod>, settings: UserSetti
                         modifier = Modifier.size(34.dp)
                     )
                     Text(formatTemperature(period.temperatureF?.toDouble(), settings), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(period.shortForecast ?: "--", maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text("Rain ${period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    MetricRow(R.drawable.ic_metric_precip, period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--")
+                    MetricRow(R.drawable.ic_metric_wind, hourlyWindWithDirection(period, settings))
                 }
             }
         }
@@ -508,9 +530,13 @@ private fun HourlyScreen(periods: List<HourlyForecastPeriod>, settings: UserSett
                         Text(period.startTime.formatShortDateTime().substringBefore(","), style = MaterialTheme.typography.bodySmall)
                     }
                     Text(formatTemperature(period.temperatureF?.toDouble(), settings), modifier = Modifier.width(72.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Column(Modifier.weight(1f)) {
-                        Text(period.shortForecast ?: "--")
-                        Text("Rain ${period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--"}  Wind ${period.windSpeed ?: "--"} ${period.windDirection ?: ""}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MetricRow(R.drawable.ic_metric_precip, period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--")
+                        MetricRow(R.drawable.ic_metric_wind, hourlyWindWithDirection(period, settings))
                     }
                 }
             }
@@ -546,11 +572,13 @@ private fun DailyPeriodCard(period: DailyForecastPeriod, settings: UserSettings,
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(period.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(period.shortForecast ?: "--", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        MetricRow(R.drawable.ic_metric_precip, period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--")
+                        MetricRow(R.drawable.ic_metric_wind, dailyWindWithDirection(period))
+                    }
                 }
                 Text(formatTemperature(period.temperatureF?.toDouble(), settings), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
-            Text("Wind ${period.windSpeed ?: "--"} ${period.windDirection ?: ""}  Rain ${period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--"}")
             if (expandable) {
                 TextButton(onClick = { expandedMap[period.periodNumber] = !expanded }) {
                     Text(if (expanded) "Less" else "Details")
@@ -655,7 +683,7 @@ private fun RadarScreen(radar: RadarUiState, onRefresh: () -> Unit) {
                     Text("Radar time: ${radar.radarTimestamp?.formatShortDateTime() ?: "Latest available"}")
                     Text("Updated in app: ${radar.fetchedAt?.formatShortDateTime() ?: "--"}")
                     Text(
-                        "Radar imagery may be delayed. Imagery provided by NOAA/National Weather Service.",
+                        "Radar imagery may be delayed. Imagery provided by NOAA/National Weather Service. Static basemap provided by Esri World Topographic Map service when available.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -797,7 +825,7 @@ private fun SettingsScreen(uiState: WeatherUiState, vm: WeatherViewModel) {
                 Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Background refresh", fontWeight = FontWeight.Bold)
-                        Text("Conservative refresh every few hours", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Conservative refresh about every 30 minutes", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = settings.backgroundRefreshEnabled, onCheckedChange = vm::setBackgroundRefresh)
                 }
@@ -914,6 +942,49 @@ private fun AppTab.icon(): ImageVector = when (this) {
     AppTab.About -> Icons.Default.Info
 }
 
+@Composable
+private fun MetricRow(iconRes: Int, value: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+private fun highLowText(dashboard: WeatherDashboard, settings: UserSettings): String {
+    val temps = dashboard.dailyForecast.take(2).mapNotNull { it.temperatureF?.toDouble() }
+    val high = temps.maxOrNull()?.let { formatTemperature(it, settings) } ?: "--"
+    val low = temps.minOrNull()?.let { formatTemperature(it, settings) } ?: "--"
+    return "H $high  L $low"
+}
+
+private fun precipText(dashboard: WeatherDashboard): String {
+    return dashboard.hourlyForecast
+        .take(8)
+        .mapNotNull { it.probabilityOfPrecipitationPercent }
+        .maxOrNull()
+        ?.let { "$it%" }
+        ?: dashboard.dailyForecast.firstOrNull()?.probabilityOfPrecipitationPercent?.let { "$it%" }
+        ?: "--"
+}
+
+private fun hourlyWindWithDirection(period: HourlyForecastPeriod, settings: UserSettings): String {
+    val firstSpeed = period.windSpeed?.let { WIND_NUMBER.find(it)?.value?.toDoubleOrNull() } ?: return "--"
+    val speed = when (settings.windUnit) {
+        WindUnit.Mph -> "${firstSpeed.roundToInt()} mph"
+        WindUnit.Kmh -> "${mphToKmh(firstSpeed).roundToInt()} km/h"
+    }
+    return "$speed ${period.windDirection.orEmpty()}".trim()
+}
+
+private fun dailyWindWithDirection(period: DailyForecastPeriod): String {
+    return "${period.windSpeed ?: "--"} ${period.windDirection.orEmpty()}".trim()
+}
+
 private fun formatTemperature(valueF: Double?, settings: UserSettings): String {
     val value = valueF ?: return "--"
     return when (settings.temperatureUnit) {
@@ -952,3 +1023,5 @@ private fun severityColors(severity: String?): Pair<Color, Color> = when (severi
 }
 
 private fun Double.round4(): String = "%.4f".format(this)
+
+private val WIND_NUMBER = Regex("""\d+(\.\d+)?""")

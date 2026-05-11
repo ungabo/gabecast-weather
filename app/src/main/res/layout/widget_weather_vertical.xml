@@ -42,19 +42,6 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/widget_condition"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:text="Partly cloudy"
-        android:textColor="#BCE9EC"
-        android:textSize="11sp" />
-
-    <TextView
         android:id="@+id/widget_high_low"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -65,4 +52,17 @@
         android:textColor="#F8FFFF"
         android:textSize="12sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_updated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="Updated --"
+        android:textColor="#BCE9EC"
+        android:textSize="10sp" />
 </LinearLayout>
