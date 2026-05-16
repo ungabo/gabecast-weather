@@ -82,6 +82,10 @@
                 android:resource="@xml/radar_weather_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.WidgetRefreshReceiver"
+            android:exported="false" />
+
         <service
             android:name=".widget.HourlyWidgetService"
             android:exported="false"

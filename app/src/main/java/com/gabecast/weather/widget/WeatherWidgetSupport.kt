@@ -28,6 +28,16 @@ internal object WeatherWidgetSupport {
         )
     }
 
+    private fun refreshPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, WidgetRefreshReceiver::class.java)
+        return PendingIntent.getBroadcast(
+            context,
+            1001,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
     private fun loadDashboard(allowRefresh: Boolean): WeatherDashboard? = runBlocking(Dispatchers.IO) {
         val selectedId = ServiceLocator.settingsRepository.settingsSnapshotSelectedId()
         selectedId?.let {
@@ -117,6 +127,7 @@ internal object WeatherWidgetSupport {
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
         views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
+        views.setOnClickPendingIntent(R.id.widget_updated, refreshPendingIntent(context))
         manager.updateAppWidget(appWidgetId, views)
     }
 
@@ -133,6 +144,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
         views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
+        views.setOnClickPendingIntent(R.id.widget_updated, refreshPendingIntent(context))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
         manager.updateAppWidget(appWidgetId, views)
     }
@@ -150,6 +162,7 @@ internal object WeatherWidgetSupport {
         views.setTextViewText(R.id.widget_temp, tempText(dashboard?.currentConditions?.temperatureF))
         views.setTextViewText(R.id.widget_high_low, highLowText(dashboard))
         views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
+        views.setOnClickPendingIntent(R.id.widget_updated, refreshPendingIntent(context))
         views.setTextViewText(R.id.widget_precip_value, precipText(dashboard))
         views.setTextViewText(R.id.widget_wind_value, windText(dashboard))
         views.setImageViewResource(R.id.widget_icon, conditionIconRes(conditionText(dashboard)))
@@ -167,6 +180,7 @@ internal object WeatherWidgetSupport {
         views.setOnClickPendingIntent(R.id.widget_root, launchPendingIntent(context))
         views.setTextViewText(R.id.widget_location, dashboard?.location?.displayName ?: "Next 8 hours")
         views.setTextViewText(R.id.widget_updated, updatedText(dashboard))
+        views.setOnClickPendingIntent(R.id.widget_updated, refreshPendingIntent(context))
         val intent = Intent(context, HourlyWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))

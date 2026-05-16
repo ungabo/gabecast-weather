@@ -12,8 +12,9 @@ class WeatherRefreshWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
+        val manualRefresh = inputData.getBoolean(KEY_MANUAL_REFRESH, false)
         val settings = ServiceLocator.settingsRepository.settings.first()
-        if (!settings.backgroundRefreshEnabled) return Result.success()
+        if (!manualRefresh && !settings.backgroundRefreshEnabled) return Result.success()
         if (!settings.nwsContactEmailConfirmed) return Result.success()
         val selectedId = settings.selectedLocationId ?: return Result.success()
         return runCatching {
@@ -24,5 +25,9 @@ class WeatherRefreshWorker(
         }.getOrElse {
             Result.retry()
         }
+    }
+
+    companion object {
+        const val KEY_MANUAL_REFRESH = "manual_refresh"
     }
 }
