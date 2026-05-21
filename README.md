@@ -65,6 +65,16 @@ This is useful for fast desktop/mobile screenshot checks of the dashboard, radar
 
 Current screenshot outputs are kept in `web/screenshots/`.
 
+## Local Radar Debugging
+
+Radar/map alignment can be tested locally without installing the Android app:
+
+```powershell
+python tools\radar_debug.py --lat 42.2411 --lon -83.6130 --radius 75 --size 1024 --out artifacts\radar-debug\ypsilanti
+```
+
+The script fetches the NOAA radar layer and Esri basemap separately, composites them, draws the selected center and radius guide, and writes comparison screenshots plus a JSON report under `artifacts/radar-debug/`. The app uses an explicit latest NOAA radar timestamp and an approximately 75-mile-wide local view.
+
 ## Repository Notes
 
 Generated APKs, local toolchains, Gradle caches, `local.properties`, and keystore files are intentionally ignored by git.

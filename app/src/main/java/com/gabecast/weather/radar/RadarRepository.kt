@@ -22,7 +22,7 @@ class RadarRepository(
 
     suspend fun getLatestRadarImage(
         location: SavedLocation,
-        radiusMiles: Int = 75,
+        radiusMiles: Int = DEFAULT_RADAR_RADIUS_MILES,
         imageWidth: Int = 1024,
         imageHeight: Int = 1024,
         forceRefresh: Boolean = false
@@ -32,16 +32,18 @@ class RadarRepository(
         val now = Instant.now()
         val cached = dao.getRadarImage(location.id, radiusMiles, imageWidth, imageHeight)?.toDomain()
             ?.takeIf { File(it.imageFilePath).exists() }
+            ?.takeIf { File(it.imageFilePath).name.startsWith(RADAR_CACHE_FILE_PREFIX) }
         if (!forceRefresh && cached != null && cached.expiresAt.isAfter(now)) {
             return@withContext cached.toResult(location.displayName, now)
         }
 
         runCatching {
             val box = radarBoundingBox(location.latitude, location.longitude, radiusMiles)
-            val download = radarImageService.downloadRadarImage(box, imageWidth, imageHeight)
+            val extent = radarProjectedExtent(location.latitude, location.longitude, radiusMiles)
+            val download = radarImageService.downloadRadarImage(extent, imageWidth, imageHeight)
             val imageFile = File(
                 radarDirectory,
-                "radar_${location.id}_${radiusMiles}_${imageWidth}x$imageHeight.png"
+                "${RADAR_CACHE_FILE_PREFIX}${location.id}_${radiusMiles}_${imageWidth}x$imageHeight.png"
             )
             imageFile.writeBytes(download.bytes)
             val fetchedAt = Instant.now()
@@ -85,9 +87,10 @@ class RadarRepository(
     }
 
     suspend fun getCachedRadarForWidget(location: SavedLocation): RadarImageResult? = withContext(Dispatchers.IO) {
-        dao.getRadarImage(location.id, 75, 1024, 1024)
+        dao.getRadarImage(location.id, DEFAULT_RADAR_RADIUS_MILES, 1024, 1024)
             ?.toDomain()
             ?.takeIf { File(it.imageFilePath).exists() }
+            ?.takeIf { File(it.imageFilePath).name.startsWith(RADAR_CACHE_FILE_PREFIX) }
             ?.toResult(location.displayName, Instant.now())
     }
 
@@ -114,5 +117,10 @@ class RadarRepository(
             runCatching { File(path).delete() }
         }
         dao.deleteOldRadarImages(olderThan)
+    }
+
+    companion object {
+        const val DEFAULT_RADAR_RADIUS_MILES = 38
+        private const val RADAR_CACHE_FILE_PREFIX = "radar_v3_"
     }
 }

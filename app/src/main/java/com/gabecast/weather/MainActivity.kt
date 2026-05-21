@@ -6,7 +6,9 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.compose.foundation.Image
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -40,6 +42,8 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
@@ -69,7 +73,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -254,8 +257,8 @@ private fun GabeCastApp(uiState: WeatherUiState, vm: WeatherViewModel) {
                         NavigationBarItem(
                             selected = uiState.selectedTab == tab,
                             onClick = { vm.selectTab(tab) },
-                            icon = { Icon(tab.icon(), contentDescription = tab.label) },
-                            label = { Text(tab.label) }
+                            alwaysShowLabel = false,
+                            icon = { Icon(tab.icon(), contentDescription = tab.label) }
                         )
                     }
                 }
@@ -406,7 +409,12 @@ private fun DashboardScreen(dashboard: WeatherDashboard, settings: UserSettings,
         item { HourlyStrip(dashboard.hourlyForecast.take(24), settings) }
         item { SectionTitle("7-day forecast") }
         items(dashboard.dailyForecast.take(14)) { period ->
-            DailyPeriodCard(period, settings, expandable = false)
+            DailyPeriodCard(
+                period = period,
+                settings = settings,
+                expanded = false,
+                onToggle = null
+            )
         }
     }
 }
@@ -437,11 +445,11 @@ private fun CurrentConditionsCard(dashboard: WeatherDashboard, settings: UserSet
                     Text(formatTemperature(current?.temperatureF, settings), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
                     Text(highLowText(dashboard, settings), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    MetricRow(R.drawable.ic_metric_precip, precipText(dashboard))
-                    MetricRow(R.drawable.ic_metric_wind, formatWind(current?.windSpeedMph, current?.windDirection, settings))
-                    Text("Humidity ${current?.humidityPercent?.roundToInt()?.let { "$it%" } ?: "--"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                MetricRow(R.drawable.ic_metric_precip, precipText(dashboard))
+                MetricRow(R.drawable.ic_metric_wind, formatWind(current?.windSpeedMph, current?.windDirection, settings))
+                Text("Humidity ${current?.humidityPercent?.roundToInt()?.let { "$it%" } ?: "--"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(dashboard.currentConditions?.fetchedAt.formatUpdatedAge(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -546,47 +554,76 @@ private fun HourlyScreen(periods: List<HourlyForecastPeriod>, settings: UserSett
 
 @Composable
 private fun DailyScreen(periods: List<DailyForecastPeriod>, settings: UserSettings) {
+    val expandedPeriods = remember { mutableStateMapOf<Int, Boolean>() }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(periods) { period ->
-            DailyPeriodCard(period, settings, expandable = true)
+            val expanded = expandedPeriods[period.periodNumber] ?: false
+            DailyPeriodCard(
+                period = period,
+                settings = settings,
+                expanded = expanded,
+                onToggle = {
+                    expandedPeriods[period.periodNumber] = !expanded
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun DailyPeriodCard(period: DailyForecastPeriod, settings: UserSettings, expandable: Boolean) {
-    val expandedMap = remember { mutableStateMapOf<Int, Boolean>() }
-    val expanded = expandedMap[period.periodNumber] ?: false
-    Card {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+private fun DailyPeriodCard(
+    period: DailyForecastPeriod,
+    settings: UserSettings,
+    expanded: Boolean,
+    onToggle: (() -> Unit)?
+) {
+    val cardModifier = if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier
+    Card(modifier = cardModifier) {
+        Column(
+            Modifier
+                .animateContentSize()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Image(
                     painter = painterResource(weatherIconFor(period.shortForecast)),
                     contentDescription = period.shortForecast ?: "Forecast",
-                    modifier = Modifier.size(42.dp)
+                    modifier = Modifier.size(34.dp)
                 )
-                Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(period.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(period.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         MetricRow(R.drawable.ic_metric_precip, period.probabilityOfPrecipitationPercent?.let { "$it%" } ?: "--")
-                        MetricRow(R.drawable.ic_metric_wind, dailyWindWithDirection(period))
+                        MetricRow(R.drawable.ic_metric_wind, dailyWindCompact(period))
                     }
                 }
-                Text(formatTemperature(period.temperatureF?.toDouble(), settings), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            }
-            if (expandable) {
-                TextButton(onClick = { expandedMap[period.periodNumber] = !expanded }) {
-                    Text(if (expanded) "Less" else "Details")
+                Text(
+                    formatTemperature(period.temperatureF?.toDouble(), settings),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (onToggle != null) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Collapse forecast" else "Expand forecast"
+                    )
                 }
             }
-            if (expanded || !expandable) {
-                val details = period.detailedForecast
-                if (!details.isNullOrBlank()) Text(details, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (expanded) {
+                period.detailedForecast?.takeIf { it.isNotBlank() }?.let {
+                    Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
@@ -626,16 +663,15 @@ private fun RadarScreen(radar: RadarUiState, onRefresh: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Radar near ${radar.locationName ?: "selected location"}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Approx. 75-mile radius", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = onRefresh, enabled = radar.canRefresh && !radar.isLoading) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh radar")
+                    }
                 }
-                Button(onClick = onRefresh, enabled = radar.canRefresh && !radar.isLoading) {
-                    Icon(Icons.Default.Refresh, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Refresh")
-                }
+                Text("Approx. 75-mile-wide view", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         if (radar.isStale || !radar.errorMessage.isNullOrBlank()) {
@@ -951,7 +987,13 @@ private fun MetricRow(iconRes: Int, value: String, modifier: Modifier = Modifier
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(4.dp))
-        Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            value,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -981,8 +1023,12 @@ private fun hourlyWindWithDirection(period: HourlyForecastPeriod, settings: User
     return "$speed ${period.windDirection.orEmpty()}".trim()
 }
 
-private fun dailyWindWithDirection(period: DailyForecastPeriod): String {
-    return "${period.windSpeed ?: "--"} ${period.windDirection.orEmpty()}".trim()
+private fun dailyWindCompact(period: DailyForecastPeriod): String {
+    val speed = period.windSpeed
+        ?.replace(" to ", "-", ignoreCase = true)
+        ?.replace(" mph", "", ignoreCase = true)
+        ?.trim()
+    return listOfNotNull(speed, period.windDirection).joinToString(" ").ifBlank { "--" }
 }
 
 private fun formatTemperature(valueF: Double?, settings: UserSettings): String {

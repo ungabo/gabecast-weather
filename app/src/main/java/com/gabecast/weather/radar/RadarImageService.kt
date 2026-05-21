@@ -11,6 +11,7 @@ import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -19,8 +20,9 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
-private const val RADAR_EXPORT_URL =
-    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer/exportImage"
+private const val RADAR_SERVICE_URL =
+    "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer"
+private const val RADAR_EXPORT_URL = "$RADAR_SERVICE_URL/exportImage"
 private const val BASEMAP_EXPORT_URL =
     "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/export"
 
@@ -32,20 +34,23 @@ class RadarImageService(context: Context) {
         .readTimeout(24, TimeUnit.SECONDS)
         .build()
 
-    fun buildRadarUrl(box: RadarBoundingBox, width: Int, height: Int): String {
-        return RADAR_EXPORT_URL.toHttpUrl().newBuilder()
-            .addQueryParameter("bbox", "${box.minLon},${box.minLat},${box.maxLon},${box.maxLat}")
-            .addQueryParameter("bboxSR", "4326")
-            .addQueryParameter("imageSR", "4326")
+    fun buildRadarUrl(extent: RadarProjectedExtent, width: Int, height: Int, radarTimeMillis: Long): String {
+        val builder = RADAR_EXPORT_URL.toHttpUrl().newBuilder()
+            .addQueryParameter("bbox", extent.toBboxParameter())
+            .addQueryParameter("bboxSR", extent.spatialReference.toString())
+            .addQueryParameter("imageSR", extent.spatialReference.toString())
             .addQueryParameter("size", "$width,$height")
             .addQueryParameter("format", "png32")
             .addQueryParameter("transparent", "true")
+            .addQueryParameter("adjustAspectRatio", "false")
             .addQueryParameter("f", "image")
+            .addQueryParameter("time", radarTimeMillis.toString())
+        return builder
             .build()
             .toString()
     }
 
-    fun downloadRadarImage(box: RadarBoundingBox, width: Int, height: Int): RadarDownload {
+    fun downloadRadarImage(extent: RadarProjectedExtent, width: Int, height: Int): RadarDownload {
         val confirmed = contactPrefs.getBoolean(UserSettingsRepository.CONTACT_CONFIRMED_PREF_KEY, false)
         val contact = contactPrefs
             .getString(UserSettingsRepository.CONTACT_PREF_KEY, "")
@@ -53,8 +58,9 @@ class RadarImageService(context: Context) {
         if (!confirmed || contact == null) {
             throw IOException("Enter a contact email before requesting radar data.")
         }
+        val radarTimeMillis = fetchLatestRadarTimeMillis(contact)
         val request = Request.Builder()
-            .url(buildRadarUrl(box, width, height))
+            .url(buildRadarUrl(extent, width, height, radarTimeMillis))
             .header("User-Agent", "GabeCast/1.0 ($contact)")
             .build()
         client.newCall(request).execute().use { response ->
@@ -66,20 +72,41 @@ class RadarImageService(context: Context) {
             bitmap.recycle()
             val timestamp = response.header("Last-Modified")?.let {
                 runCatching { ZonedDateTime.parse(it, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant() }.getOrNull()
-            }
+            } ?: Instant.ofEpochMilli(radarTimeMillis)
             val compositedBytes = runCatching {
-                val basemapBytes = downloadBaseMapImage(box, width, height, contact)
+                val basemapBytes = downloadBaseMapImage(extent, width, height, contact)
                 compositeRadarOverBasemap(basemapBytes, radarBytes, width, height)
             }.getOrDefault(radarBytes)
             return RadarDownload(bytes = compositedBytes, radarTimestamp = timestamp)
         }
     }
 
-    private fun buildBaseMapUrl(box: RadarBoundingBox, width: Int, height: Int): String {
+    private fun fetchLatestRadarTimeMillis(contact: String): Long {
+        val url = RADAR_SERVICE_URL.toHttpUrl().newBuilder()
+            .addQueryParameter("f", "json")
+            .build()
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "GabeCast/1.0 ($contact)")
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Radar metadata request failed with HTTP ${response.code}")
+            val body = response.body?.string() ?: throw IOException("Radar metadata response was empty")
+            val timeExtent = JSONObject(body)
+                .optJSONObject("timeInfo")
+                ?.optJSONArray("timeExtent")
+                ?: throw IOException("Radar metadata did not include a time extent")
+            val latestTime = timeExtent.optLong(1, 0L)
+            if (latestTime <= 0L) throw IOException("Radar metadata did not include a latest radar time")
+            return latestTime
+        }
+    }
+
+    private fun buildBaseMapUrl(extent: RadarProjectedExtent, width: Int, height: Int): String {
         return BASEMAP_EXPORT_URL.toHttpUrl().newBuilder()
-            .addQueryParameter("bbox", "${box.minLon},${box.minLat},${box.maxLon},${box.maxLat}")
-            .addQueryParameter("bboxSR", "4326")
-            .addQueryParameter("imageSR", "4326")
+            .addQueryParameter("bbox", extent.toBboxParameter())
+            .addQueryParameter("bboxSR", extent.spatialReference.toString())
+            .addQueryParameter("imageSR", extent.spatialReference.toString())
             .addQueryParameter("size", "$width,$height")
             .addQueryParameter("format", "png32")
             .addQueryParameter("transparent", "false")
@@ -88,9 +115,9 @@ class RadarImageService(context: Context) {
             .toString()
     }
 
-    private fun downloadBaseMapImage(box: RadarBoundingBox, width: Int, height: Int, contact: String): ByteArray {
+    private fun downloadBaseMapImage(extent: RadarProjectedExtent, width: Int, height: Int, contact: String): ByteArray {
         val request = Request.Builder()
-            .url(buildBaseMapUrl(box, width, height))
+            .url(buildBaseMapUrl(extent, width, height))
             .header("User-Agent", "GabeCast/1.0 ($contact)")
             .build()
         client.newCall(request).execute().use { response ->
